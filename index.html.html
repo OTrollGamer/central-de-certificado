@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Certificação Digital - CAA / Portal de TI</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        caa: {
+                            50: '#f0f6ff',
+                            100: '#e0edff',
+                            200: '#c7ddff',
+                            600: '#02529c',
+                            700: '#013e78',
+                            800: '#012f5a',
+                            900: '#011e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <header class="bg-caa-900 text-white border-b border-caa-800 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Identidade CAA -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-caa-600 p-2 rounded-xl text-white shadow-md">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-blue-300 block">Caixa de Assistência dos Advogados</span>
+                        <h1 class="text-base sm:text-lg font-bold leading-none text-white flex items-center gap-2">
+                            Central de Certificação Digital
+                            <span class="text-[10px] bg-blue-500/20 text-blue-200 px-2 py-0.5 rounded-full border border-blue-400/30">Suporte TI</span>
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- Modos e Ações Principais -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <!-- Botão Alternar Modo Edição/Admin -->
+                    <button id="adminToggleBtn" onclick="toggleAdminMode()" class="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow-sm bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700">
+                        <i data-lucide="settings" class="w-4 h-4 text-amber-400"></i>
+                        <span id="adminToggleText" class="hidden sm:inline">Modo Edição (Desativado)</span>
+                    </button>
+
+                    <!-- Botão de Novo Item (Apenas visível no Modo Admin) -->
+                    <button id="addNewBtn" onclick="openItemModal()" class="hidden items-center space-x-1.5 text-xs font-bold px-3 py-2 rounded-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Adicionar Item</span>
+                    </button>
+
+                    <!-- Exportar/Importar Catálogo -->
+                    <div id="catalogAdminGroup" class="hidden items-center space-x-1">
+                        <button onclick="exportCatalogJSON()" title="Exportar Catálogo em JSON" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="triggerImportJSON()" title="Importar Catálogo JSON" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                        </button>
+                        <input type="file" id="jsonFileInput" class="hidden" accept=".json" onchange="importCatalogJSON(event)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="bg-gradient-to-b from-caa-900 via-caa-800 to-slate-900 text-white py-8 px-4 shadow-inner relative overflow-hidden">
+        <div class="max-w-4xl mx-auto text-center relative z-10 space-y-4">
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Repositório de Software & Drivers PJe / A3
+            </h2>
+            <p class="text-blue-200 text-xs sm:text-sm max-w-2xl mx-auto">
+                Links diretos, drivers criptográficos, gerenciadores e utilitários para instalação e suporte aos advogados.
+            </p>
+
+            <!-- Campo de Pesquisa em Tempo Real -->
+            <div class="relative max-w-2xl mx-auto pt-2">
+                <div class="relative flex items-center">
+                    <i data-lucide="search" class="w-5 h-5 absolute left-4 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="filterItems()" placeholder="Buscar por driver, leitora, token, PJe, SafeSign, Java..." class="w-full pl-11 pr-24 py-3 bg-white text-slate-900 rounded-xl shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-400 text-sm font-medium">
+                    <button onclick="clearSearch()" id="clearBtn" class="hidden absolute right-3 px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-md transition-all">Limpar</button>
+                </div>
+            </div>
+
+            <!-- Filtro de Categorias em Chips -->
+            <div id="categoryChips" class="flex flex-wrap items-center justify-center gap-1.5 text-xs pt-2">
+                <!-- Injetado dinamicamente via JS -->
+            </div>
+        </div>
+    </section>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow space-y-10">
+
+        <!-- Bar de status do Modo Edição se ativado -->
+        <div id="adminBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-amber-900 text-xs flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-2">
+                <i data-lucide="wrench" class="w-5 h-5 text-amber-600"></i>
+                <div>
+                    <strong class="font-bold text-slate-900 text-sm">Modo de Gerenciamento do Catálogo Ativo!</strong>
+                    <p class="text-slate-600">Você pode adicionar novos links, editar softwares existentes, alterar arquivos e links ou excluir itens do catálogo da CAA.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="resetToDefaults()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-bold transition-all flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Restaurar Padrões
+                </button>
+                <button onclick="openItemModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-all flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Novo Programa
+                </button>
+            </div>
+        </div>
+
+        <!-- Seção de Cartões de Software -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="folder-git-2" class="w-5 h-5 text-caa-600"></i>
+                    Programas & Drivers Cadastrados
+                </h3>
+                <span id="itemsCounter" class="text-xs font-semibold bg-slate-100 text-slate-600 px-3 py-1 rounded-full border border-slate-200">
+                    Carregando...
+                </span>
+            </div>
+
+            <!-- Grid com todos os itens -->
+            <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Gerado dinamicamente pelo JS -->
+            </div>
+
+            <!-- Card Sem Resultados -->
+            <div id="noResults" class="hidden text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                <i data-lucide="search-x" class="w-12 h-12 text-slate-400 mx-auto mb-2"></i>
+                <h4 class="text-slate-800 font-bold text-base">Nenhum software ou driver encontrado</h4>
+                <p class="text-slate-500 text-xs mt-1">Tente mudar o termo de busca ou adicionar um novo software no botão abaixo.</p>
+                <button onclick="openItemModal()" class="mt-4 px-4 py-2 bg-caa-600 text-white rounded-lg text-xs font-bold hover:bg-caa-700 transition-all">Adicionar este Software</button>
+            </div>
+        </section>
+
+        <section id="script-generator" class="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-800 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <div class="inline-flex items-center space-x-1.5 bg-amber-500/20 text-amber-400 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 mb-2">
+                        <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+                        <span>Instalador em Lote Silencioso</span>
+                    </div>
+                    <h3 class="text-xl font-bold">Gerador de Script .BAT para Instalação no Advogado</h3>
+                    <p class="text-slate-400 text-xs mt-1">Selecione quais componentes deseja incluir no script de instalação automatizada sem tela.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="downloadGeneratedScript()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-2 transition-all shadow-md">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Baixar Script (.bat)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seletores de pacotes para o script -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs text-slate-300">
+                <label class="flex items-center space-x-2 bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-all">
+                    <input type="checkbox" id="scriptOptSafeSign" checked class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                    <span>SafeSign IC 64-bit (/qn)</span>
+                </label>
+                <label class="flex items-center space-x-2 bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-all">
+                    <input type="checkbox" id="scriptOptPJeOffice" checked class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                    <span>PJe Office v2.6 (/VERYSILENT)</span>
+                </label>
+                <label class="flex items-center space-x-2 bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-all">
+                    <input type="checkbox" id="scriptOptChains" checked class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                    <span>Cadeias ICP-Brasil V2/V5/V10</span>
+                </label>
+                <label class="flex items-center space-x-2 bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-all">
+                    <input type="checkbox" id="scriptOptSCardService" checked class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                    <span>Ativar Serviço de SmartCard Windows</span>
+                </label>
+                <label class="flex items-center space-x-2 bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-all">
+                    <input type="checkbox" id="scriptOptSAC" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                    <span>SafeNet SAC 10.8 (/qn)</span>
+                </label>
+                <label class="flex items-center space-x-2 bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition-all">
+                    <input type="checkbox" id="scriptOptJava" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                    <span>Java Runtime 8 (/s)</span>
+                </label>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-50 text-caa-700 p-2.5 rounded-xl border border-blue-100">
+                        <i data-lucide="check-square" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Checklist do Técnico de TI (Presencial/Remoto)</h3>
+                        <p class="text-xs text-slate-500">Marque cada etapa durante a configuração da máquina do advogado para assegurar a instalação limpa.</p>
+                    </div>
+                </div>
+                <button onclick="resetChecklist()" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">Limpar Checklist</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs" id="checklistContainer">
+                <label class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 flex items-start space-x-3 cursor-pointer transition-all">
+                    <input type="checkbox" class="chk-item mt-0.5 rounded text-caa-600 focus:ring-0 w-4 h-4">
+                    <div>
+                        <strong class="font-bold text-slate-800 block text-sm">1. Limpeza de Conflitos</strong>
+                        <span class="text-slate-500">Desinstalar SafeSign antigos ou versões duplicadas do PJe Office em `appwiz.cpl`.</span>
+                    </div>
+                </label>
+
+                <label class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 flex items-start space-x-3 cursor-pointer transition-all">
+                    <input type="checkbox" class="chk-item mt-0.5 rounded text-caa-600 focus:ring-0 w-4 h-4">
+                    <div>
+                        <strong class="font-bold text-slate-800 block text-sm">2. Conexão do Leitor/Token</strong>
+                        <span class="text-slate-500">Conectar leitora ou token USB na porta física e verificar no Gerenciador de Dispositivos (`devmgmt.msc`).</span>
+                    </div>
+                </label>
+
+                <label class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 flex items-start space-x-3 cursor-pointer transition-all">
+                    <input type="checkbox" class="chk-item mt-0.5 rounded text-caa-600 focus:ring-0 w-4 h-4">
+                    <div>
+                        <strong class="font-bold text-slate-800 block text-sm">3. Gerenciador Criptográfico</strong>
+                        <span class="text-slate-500">Instalar SafeSign IC 64-bit ou SAC Safenet. Testar a leitura do PIN no Token Admin.</span>
+                    </div>
+                </label>
+
+                <label class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 flex items-start space-x-3 cursor-pointer transition-all">
+                    <input type="checkbox" class="chk-item mt-0.5 rounded text-caa-600 focus:ring-0 w-4 h-4">
+                    <div>
+                        <strong class="font-bold text-slate-800 block text-sm">4. Cadeias ICP-Brasil</strong>
+                        <span class="text-slate-500">Importar as cadeias V2, V5 e V10 na Autoridade de Certificação Raiz Confiável.</span>
+                    </div>
+                </label>
+
+                <label class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 flex items-start space-x-3 cursor-pointer transition-all">
+                    <input type="checkbox" class="chk-item mt-0.5 rounded text-caa-600 focus:ring-0 w-4 h-4">
+                    <div>
+                        <strong class="font-bold text-slate-800 block text-sm">5. PJe Office & Navegador</strong>
+                        <span class="text-slate-500">Instalar PJe Office, liberar no Firewall do Windows e adicionar a extensão WebPKI.</span>
+                    </div>
+                </label>
+
+                <label class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 flex items-start space-x-3 cursor-pointer transition-all">
+                    <input type="checkbox" class="chk-item mt-0.5 rounded text-caa-600 focus:ring-0 w-4 h-4">
+                    <div>
+                        <strong class="font-bold text-slate-800 block text-sm">6. Validação do Certificado</strong>
+                        <span class="text-slate-500">Realizar login no e-CAC ou no portal do Tribunal (TRT/TJ) confirmando a digitação do PIN.</span>
+                    </div>
+                </label>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL FORMULÁRIO DE ADICIONAR / EDITAR SOFTWARE -->
+    <div id="itemModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-caa-600 text-white p-2 rounded-lg">
+                        <i data-lucide="edit" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 id="modalFormTitle" class="font-bold text-slate-900 text-base">Cadastrar Novo Software / Driver</h3>
+                        <p class="text-xs text-slate-500">Preencha os detalhes para atualizar o repositório da CAA</p>
+                    </div>
+                </div>
+                <button onclick="closeItemModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="itemForm" onsubmit="saveItem(event)" class="p-6 space-y-4 overflow-y-auto text-xs custom-scrollbar">
+                <input type="hidden" id="formItemId">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Nome do Programa / Driver *</label>
+                        <input type="text" id="formTitle" required placeholder="Ex: SafeSign IC 64-bits" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Categoria *</label>
+                        <select id="formCategory" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600 font-medium">
+                            <option value="tokens">Tokens USB</option>
+                            <option value="readers">Leitoras SmartCard</option>
+                            <option value="csp">Gerenciadores Criptográficos (CSP)</option>
+                            <option value="chains">Cadeias de Certificados</option>
+                            <option value="pje">Sistemas & PJe Office</option>
+                            <option value="utils">Utilitários & Scripts</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Versão</label>
+                        <input type="text" id="formVersion" placeholder="Ex: v3.5.5" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600">
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Sistema Operacional</label>
+                        <input type="text" id="formArch" placeholder="Ex: Win 10/11 x64" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600">
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Ícone</label>
+                        <select id="formIcon" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600">
+                            <option value="shield-check">Escudo (SafeSign/CSP)</option>
+                            <option value="usb">USB (Tokens)</option>
+                            <option value="credit-card">Cartão (Leitoras)</option>
+                            <option value="file-signature">Assinatura (PJe)</option>
+                            <option value="link-2">Link (Cadeias)</option>
+                            <option value="coffee">Java (Coffee)</option>
+                            <option value="file-code">Script / Bat</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Link de Download Direto / Oficial *</label>
+                    <input type="url" id="formUrl" required placeholder="https://exemplo.com/arquivo.exe" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600 font-mono">
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Descrição Curta *</label>
+                    <textarea id="formDesc" rows="2" required placeholder="Resumo do programa e sua utilização no advogado..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600"></textarea>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Instruções Técnicas de Instalação</label>
+                    <textarea id="formInstructions" rows="2" placeholder="Passo a passo para o técnico de TI durante o suporte..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600"></textarea>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Observação / Nota de Alerta</label>
+                    <input type="text" id="formNote" placeholder="Ex: Desconectar o token antes de instalar." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-caa-600">
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <button type="button" id="deleteItemBtn" onclick="deleteCurrentItem()" class="hidden px-3 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold rounded-lg transition-all flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Programa
+                    </button>
+                    <div class="flex items-center space-x-2 ml-auto">
+                        <button type="button" onclick="closeItemModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition-all">Cancelar</button>
+                        <button type="submit" class="px-5 py-2 bg-caa-600 hover:bg-caa-700 text-white font-bold rounded-lg transition-all shadow-md">Salvar Alterações</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE INSTRUÇÕES COMPLETA DO PROGRAMA -->
+    <div id="instructionsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-2">
+                    <div class="p-2 rounded-lg bg-blue-100 text-caa-700">
+                        <i data-lucide="help-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 id="instModalTitle" class="font-bold text-slate-900 text-base">Instruções de Instalação</h3>
+                        <span id="instModalCategory" class="text-[10px] font-bold uppercase text-slate-400">Geral</span>
+                    </div>
+                </div>
+                <button onclick="closeInstructionsModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs text-slate-600 leading-relaxed">
+                <div>
+                    <h4 class="font-bold text-slate-800 text-sm mb-1">Passo a Passo para Suporte Técnico:</h4>
+                    <p id="instModalText" class="whitespace-pre-line text-slate-600">Instruções...</p>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900">
+                    <strong class="font-bold block mb-0.5 text-amber-950 flex items-center gap-1">
+                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600"></i> Observação Importante:
+                    </strong>
+                    <span id="instModalNote">Aviso...</span>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button onclick="closeInstructionsModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-xs transition-all">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center space-x-2">
+                <i data-lucide="shield" class="w-4 h-4 text-caa-600"></i>
+                <span class="font-bold text-slate-700">Caixa de Assistência dos Advogados • Gestão de Tecnologia e TI</span>
+            </div>
+            <p>© 2026 CAA - Todos os programas e links são salvos localmente na sessão.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Data Inicial do Catálogo da CAA
+        const defaultCatalog = [
+            // TOKENS USB
+            {
+                id: 'token-gd-starsign',
+                title: 'Driver Token GD Starsign (Giesecke & Devrient)',
+                category: 'tokens',
+                version: 'v4.0.0',
+                arch: 'Win 10/11 x64',
+                icon: 'usb',
+                desc: 'Driver para Token USB azul/preto modelo GD Starsign CUT S.',
+                url: 'https://www.validcertificadora.com.br/downloads/gd_starsign_driver.exe',
+                instructions: 'Desconecte o Token GD. Execute a instalação e reconecte na porta USB.',
+                note: 'Requer o gerenciador SafeSign IC instalado para funcionalidade completa.'
+            },
+            {
+                id: 'token-safenet-5110',
+                title: 'Driver Token Safenet 5100 / 5110',
+                category: 'tokens',
+                version: 'v10.8 (SAC)',
+                arch: 'Win 10/11 x64',
+                icon: 'usb',
+                desc: 'Driver integrado para tokens SafeNet e Aladdin Knowledge Systems.',
+                url: 'https://www.certisign.com.br/downloads/sac_10_8_windows.msi',
+                instructions: 'Execute o arquivo .msi do SAC (Safenet Authentication Client) para instalar.',
+                note: 'Dispensa o uso do SafeSign IC pois utiliza o Safenet Client.'
+            },
+            {
+                id: 'token-oberthur',
+                title: 'Driver Token Oberthur Authentic / ICO',
+                category: 'tokens',
+                version: 'v3.0.2',
+                arch: 'Win 10/11 x64',
+                icon: 'usb',
+                desc: 'Driver para Tokens Oberthur de corpo transparente ou cinza da OAB.',
+                url: 'https://www.certisign.com.br/downloads/oberthur_64bits.exe',
+                instructions: 'Execute o instalador oficial como Administrador.',
+                note: 'Verifique se a luz piscante do token estabiliza após conectar.'
+            },
+
+            // LEITORAS SMARTCARD
+            {
+                id: 'reader-gemalto',
+                title: 'Driver Leitora Gemalto / Thales PC Twin',
+                category: 'readers',
+                version: 'v4.1.4',
+                arch: 'Windows x86/x64',
+                icon: 'credit-card',
+                desc: 'Driver para leitoras de cartão com chip Gemalto IDBridge CT30 / PC Twin USB.',
+                url: 'https://support.thalesgroup.com/downloads/gemalto-pc-twin-driver.exe',
+                instructions: 'Desconecte a leitora -> Instale o driver -> Conecte na porta USB.',
+                note: 'Certifique-se de inserir o cartão com o chip virado para cima.'
+            },
+            {
+                id: 'reader-nonus',
+                title: 'Driver Leitora Nonus SmartCard',
+                category: 'readers',
+                version: 'v2.1.0',
+                arch: 'Windows 10/11',
+                icon: 'credit-card',
+                desc: 'Driver compatível para leitoras Nonus de mesa USB usadas em escritórios.',
+                url: 'https://www.nonus.com.br/downloads/driver-smartcard-nonus.zip',
+                instructions: 'Extraia o arquivo .zip e rode o setup.exe como Administrador.',
+                note: 'Funciona tanto em portas USB 2.0 quanto 3.0.'
+            },
+
+            // GERENCIADORES CSP
+            {
+                id: 'csp-safesign-64',
+                title: 'SafeSign IC 64-bit (Gerenciador Criptográfico)',
+                category: 'csp',
+                version: 'v3.5.5',
+                arch: 'Windows x64 (Padrão)',
+                icon: 'shield-check',
+                desc: 'Gerenciador indispensável para leitura de cartões e tokens A3 no Windows 64-bit.',
+                url: 'https://www.certisign.com.br/downloads/safesign/safesign_3_5_5_x64.msi',
+                instructions: 'Abra o instalador .msi. Avance selecionando a opção "Instalação Completa".',
+                note: 'Contém o utilitário "Administração do Token" para trocar o PIN.'
+            },
+            {
+                id: 'csp-sac-client',
+                title: 'SafeNet Authentication Client (SAC)',
+                category: 'csp',
+                version: 'v10.8 GA',
+                arch: 'Windows 10/11',
+                icon: 'shield-check',
+                desc: 'Gerenciador criptográfico oficial da Gemalto/Thales para tokens SafeNet.',
+                url: 'https://www.soluti.com.br/downloads/SAC_10_8_Win.zip',
+                instructions: 'Descompacte e execute o setup.msi. Selecione o idioma Português do Brasil.',
+                note: 'Excelente substituto caso o SafeSign apresente erro de PKCS#11.'
+            },
+
+            // CADEIAS DE CERTIFICADOS
+            {
+                id: 'chain-v2',
+                title: 'Cadeia de Certificados ICP-Brasil v2',
+                category: 'chains',
+                version: 'Raiz V2',
+                arch: 'Arquivo .crt',
+                icon: 'link-2',
+                desc: 'Pacote de certificados raiz para validar a confiança dos certificados A3.',
+                url: 'https://repositorio.iti.gov.br/cadeias/v2.crt',
+                instructions: 'Dois cliques no .crt -> Instalar Certificado -> Colocar em Autoridades de Certificação Raiz Confiáveis.',
+                note: 'Previne erros de site não confiável no navegador.'
+            },
+            {
+                id: 'chain-v5',
+                title: 'Cadeia de Certificados ICP-Brasil v5',
+                category: 'chains',
+                version: 'Raiz V5',
+                arch: 'Arquivo .crt',
+                icon: 'link-2',
+                desc: 'Cadeia intermediária ICP-Brasil V5 para validação SSL/TLS de sistemas judiciais.',
+                url: 'https://repositorio.iti.gov.br/cadeias/v5.crt',
+                instructions: 'Importe no repositório de Autoridades Confiáveis do Windows.',
+                note: 'Exigido por novos certificados emitidos pela OAB / Certisign.'
+            },
+            {
+                id: 'chain-v10',
+                title: 'Cadeia de Certificados ICP-Brasil v10',
+                category: 'chains',
+                version: 'Raiz V10',
+                arch: 'Arquivo .crt',
+                icon: 'link-2',
+                desc: 'Pacote atualizado da ICP-Brasil V10 exigido pelos padrões da ITI.',
+                url: 'https://repositorio.iti.gov.br/cadeias/v10.crt',
+                instructions: 'Execute o assistente de importação de certificados do Windows.',
+                note: 'Garante o reconhecimento das assinaturas no PJe.'
+            },
+
+            // SISTEMAS & PJE
+            {
+                id: 'pje-office-official',
+                title: 'PJe Office (Assinador Oficial CNJ)',
+                category: 'pje',
+                version: 'v2.6.5',
+                arch: 'Windows Executável',
+                icon: 'file-signature',
+                desc: 'Aplicativo oficial do CNJ para assinatura digital de petições em todos os tribunais.',
+                url: 'https://pje.jus.br/pje-office/pje-office_x64.exe',
+                instructions: 'Instale e marque a opção de "Início Automático com o Windows". Autorize no Firewall.',
+                note: 'O ícone do PJe Office deve permanecer ativo ao lado do relógio do Windows.'
+            },
+            {
+                id: 'pje-webpki',
+                title: 'Plugin Lacuna WebPKI (Extensão)',
+                category: 'pje',
+                version: 'v2.14.0',
+                arch: 'Chrome / Edge',
+                icon: 'puzzle',
+                desc: 'Componente necessário para pontes de autenticação Web PKI e e-SAJ.',
+                url: 'https://webpki.lacunasoftware.com/install',
+                instructions: 'Acesse o link e adicione a extensão na loja do Chrome ou Edge.',
+                note: 'Verifique se a extensão não está desativada no navegador.'
+            },
+            {
+                id: 'util-java-8',
+                title: 'Java Runtime Environment (JRE 8u381)',
+                category: 'pje',
+                version: '8u381 64-bit',
+                arch: 'Windows x64',
+                icon: 'coffee',
+                desc: 'Ambiente de execução Java para assinadores legados do TJ, TRT e TRF.',
+                url: 'https://java.com/pt_BR/download/',
+                instructions: 'Baixe o instalador offline de 64 bits.',
+                note: 'Necessário para assinar petições em tribunais regionais com sistemas antigos.'
+            }
+        ];
+
+        // Mapeamento das categorias
+        const categoriesMap = {
+            'all': 'Todos os Itens',
+            'tokens': 'Tokens USB',
+            'readers': 'Leitoras SmartCard',
+            'csp': 'Gerenciadores (CSP)',
+            'chains': 'Cadeias ICP-Brasil',
+            'pje': 'Sistemas & PJe',
+            'utils': 'Utilitários & Scripts'
+        };
+
+        // Estado da Aplicação
+        let catalog = [];
+        let isAdminMode = false;
+        let selectedCategory = 'all';
+
+        // STORAGE ENGINE - Carregar dados
+        function loadCatalog() {
+            const saved = localStorage.getItem('caa_cert_catalog_v1');
+            if (saved) {
+                try {
+                    catalog = JSON.parse(saved);
+                } catch (e) {
+                    console.error("Erro ao carregar do localStorage", e);
+                    catalog = [...defaultCatalog];
+                }
+            } else {
+                catalog = [...defaultCatalog];
+                saveCatalogToStorage();
+            }
+        }
+
+        function saveCatalogToStorage() {
+            localStorage.setItem('caa_cert_catalog_v1', JSON.stringify(catalog));
+        }
+
+        function resetToDefaults() {
+            if (confirm("Deseja realmente restaurar o catálogo de programas padrão da CAA? Todas as edições manuais serão redefinidas.")) {
+                catalog = [...defaultCatalog];
+                saveCatalogToStorage();
+                renderCategoryChips();
+                renderCards();
+            }
+        }
+
+        // TOGLE MODO ADMIN / EDIÇÃO
+        function toggleAdminMode() {
+            isAdminMode = !isAdminMode;
+
+            const text = document.getElementById('adminToggleText');
+            const btn = document.getElementById('adminToggleBtn');
+            const addBtn = document.getElementById('addNewBtn');
+            const catalogGroup = document.getElementById('catalogAdminGroup');
+            const adminBanner = document.getElementById('adminBanner');
+
+            if (isAdminMode) {
+                text.innerText = "Modo Edição (Ativo)";
+                btn.className = "flex items-center space-x-1.5 text-xs font-bold px-3 py-2 rounded-lg transition-all shadow-sm bg-amber-500 text-slate-950 hover:bg-amber-400 border border-amber-400";
+                addBtn.classList.remove('hidden');
+                addBtn.classList.add('flex');
+                catalogGroup.classList.remove('hidden');
+                catalogGroup.classList.add('flex');
+                adminBanner.classList.remove('hidden');
+            } else {
+                text.innerText = "Modo Edição (Desativado)";
+                btn.className = "flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow-sm bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700";
+                addBtn.classList.add('hidden');
+                addBtn.classList.remove('flex');
+                catalogGroup.classList.add('hidden');
+                catalogGroup.classList.remove('flex');
+                adminBanner.classList.add('hidden');
+            }
+
+            renderCards();
+        }
+
+        // RENDERIZAÇÃO DOS CHIPS DE CATEGORIA
+        function renderCategoryChips() {
+            const container = document.getElementById('categoryChips');
+            container.innerHTML = '';
+
+            Object.keys(categoriesMap).forEach(key => {
+                const btn = document.createElement('button');
+                btn.onclick = () => setCategory(key);
+
+                if (selectedCategory === key) {
+                    btn.className = "px-3 py-1 bg-blue-600 text-white font-bold rounded-full transition-all shadow-sm";
+                } else {
+                    btn.className = "px-3 py-1 bg-caa-800/80 hover:bg-caa-700 text-blue-200 font-medium rounded-full border border-blue-500/20 transition-all";
+                }
+
+                btn.innerText = categoriesMap[key];
+                container.appendChild(btn);
+            });
+        }
+
+        function setCategory(cat) {
+            selectedCategory = cat;
+            renderCategoryChips();
+            renderCards();
+        }
+
+        // RENDERIZAÇÃO DOS CARDS
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            const noResults = document.getElementById('noResults');
+            const counter = document.getElementById('itemsCounter');
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            grid.innerHTML = '';
+
+            const filtered = catalog.filter(item => {
+                const matchCategory = (selectedCategory === 'all') || (item.category === selectedCategory);
+                const matchSearch = item.title.toLowerCase().includes(searchVal) ||
+                                    item.desc.toLowerCase().includes(searchVal) ||
+                                    (item.arch && item.arch.toLowerCase().includes(searchVal)) ||
+                                    (item.version && item.version.toLowerCase().includes(searchVal));
+                return matchCategory && matchSearch;
+            });
+
+            counter.innerText = `${filtered.length} programa(s)`;
+
+            if (filtered.length === 0) {
+                noResults.classList.remove('hidden');
+                grid.classList.add('hidden');
+                return;
+            } else {
+                noResults.classList.add('hidden');
+                grid.classList.remove('hidden');
+            }
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group hover:border-blue-400 relative";
+
+                const categoryText = categoriesMap[item.category] || 'Outros';
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                <i data-lucide="${item.icon || 'file'}" class="w-3.5 h-3.5 text-caa-600"></i>
+                                ${categoryText}
+                            </span>
+                            <span class="text-[10px] font-mono font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">${item.version || 'v1.0'}</span>
+                        </div>
+
+                        <h4 class="font-bold text-slate-900 text-base leading-snug group-hover:text-caa-600 transition-colors mb-2">
+                            ${item.title}
+                        </h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                            ${item.desc}
+                        </p>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 space-y-3">
+                        <div class="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                            <span class="flex items-center gap-1"><i data-lucide="monitor" class="w-3.5 h-3.5"></i> ${item.arch || 'Windows'}</span>
+                            <button onclick="openInstructionsModal('${item.id}')" class="text-caa-600 hover:text-caa-800 font-bold flex items-center gap-1 transition-colors">
+                                <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Instalação
+                            </button>
+                        </div>
+
+                        <div class="grid ${isAdminMode ? 'grid-cols-3' : 'grid-cols-2'} gap-2">
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center space-x-1 bg-caa-600 hover:bg-caa-700 text-white font-bold py-2 px-2.5 rounded-lg text-xs transition-all shadow-sm">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                <span>Baixar</span>
+                            </a>
+                            <button onclick="copyLink('${item.url}', this)" class="flex items-center justify-center space-x-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-2.5 rounded-lg text-xs transition-all border border-slate-200">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                <span>Copiar</span>
+                            </button>
+                            ${isAdminMode ? `
+                                <button onclick="openItemModal('${item.id}')" class="flex items-center justify-center bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold py-2 px-2.5 rounded-lg text-xs transition-all border border-amber-200" title="Editar">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function filterItems() {
+            const input = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearBtn');
+            if (input.value.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderCards();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearBtn').classList.add('hidden');
+            renderCards();
+        }
+
+        function copyLink(url, btn) {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = url;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+
+            const orig = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i><span class="text-emerald-700">Copiado</span>`;
+            lucide.createIcons();
+
+            setTimeout(() => {
+                btn.innerHTML = orig;
+                lucide.createIcons();
+            }, 1800);
+        }
+
+        // MANIPULAÇÃO DO MODAL DE ADICIONAR / EDITAR ITEM
+        function openItemModal(itemId = null) {
+            const modal = document.getElementById('itemModal');
+            const form = document.getElementById('itemForm');
+            const title = document.getElementById('modalFormTitle');
+            const deleteBtn = document.getElementById('deleteItemBtn');
+
+            form.reset();
+
+            if (itemId) {
+                const item = catalog.find(i => i.id === itemId);
+                if (item) {
+                    title.innerText = "Editar Software / Driver";
+                    document.getElementById('formItemId').value = item.id;
+                    document.getElementById('formTitle').value = item.title;
+                    document.getElementById('formCategory').value = item.category;
+                    document.getElementById('formVersion').value = item.version || '';
+                    document.getElementById('formArch').value = item.arch || '';
+                    document.getElementById('formIcon').value = item.icon || 'shield-check';
+                    document.getElementById('formUrl').value = item.url;
+                    document.getElementById('formDesc').value = item.desc;
+                    document.getElementById('formInstructions').value = item.instructions || '';
+                    document.getElementById('formNote').value = item.note || '';
+
+                    deleteBtn.classList.remove('hidden');
+                }
+            } else {
+                title.innerText = "Cadastrar Novo Software / Driver";
+                document.getElementById('formItemId').value = '';
+                deleteBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeItemModal() {
+            document.getElementById('itemModal').classList.add('hidden');
+        }
+
+        function saveItem(e) {
+            e.preventDefault();
+            const id = document.getElementById('formItemId').value;
+
+            const newItemData = {
+                id: id || ('custom-' + Date.now()),
+                title: document.getElementById('formTitle').value,
+                category: document.getElementById('formCategory').value,
+                version: document.getElementById('formVersion').value,
+                arch: document.getElementById('formArch').value,
+                icon: document.getElementById('formIcon').value,
+                url: document.getElementById('formUrl').value,
+                desc: document.getElementById('formDesc').value,
+                instructions: document.getElementById('formInstructions').value,
+                note: document.getElementById('formNote').value
+            };
+
+            if (id) {
+                const index = catalog.findIndex(i => i.id === id);
+                if (index !== -1) {
+                    catalog[index] = newItemData;
+                }
+            } else {
+                catalog.unshift(newItemData);
+            }
+
+            saveCatalogToStorage();
+            closeItemModal();
+            renderCards();
+        }
+
+        function deleteCurrentItem() {
+            const id = document.getElementById('formItemId').value;
+            if (id && confirm("Tem certeza que deseja excluir este software do catálogo da CAA?")) {
+                catalog = catalog.filter(i => i.id !== id);
+                saveCatalogToStorage();
+                closeItemModal();
+                renderCards();
+            }
+        }
+
+        // MODAL DE INSTRUÇÕES DE INSTALAÇÃO
+        function openInstructionsModal(itemId) {
+            const item = catalog.find(i => i.id === itemId);
+            if (!item) return;
+
+            document.getElementById('instModalTitle').innerText = item.title;
+            document.getElementById('instModalCategory').innerText = (categoriesMap[item.category] || '') + ' • ' + (item.version || '');
+            document.getElementById('instModalText').innerText = item.instructions || 'Instale o programa utilizando privilégios de administrador.';
+            document.getElementById('instModalNote').innerText = item.note || 'Verifique se o token ou leitora está conectado antes de usar.';
+
+            document.getElementById('instructionsModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeInstructionsModal() {
+            document.getElementById('instructionsModal').classList.add('hidden');
+        }
+
+        // EXPORTAR E IMPORTAR CATÁLOGO EM JSON
+        function exportCatalogJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(catalog, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `catalogo_certificacao_caa_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function triggerImportJSON() {
+            document.getElementById('jsonFileInput').click();
+        }
+
+        function importCatalogJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        catalog = imported;
+                        saveCatalogToStorage();
+                        renderCategoryChips();
+                        renderCards();
+                        alert("Catálogo importado com sucesso!");
+                    } else {
+                        alert("Formato de arquivo JSON inválido.");
+                    }
+                } catch (err) {
+                    alert("Erro ao ler arquivo JSON: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // GERADOR DE SCRIPT SILENCIOSO .BAT
+        function downloadGeneratedScript() {
+            const incSafeSign = document.getElementById('scriptOptSafeSign').checked;
+            const incPJeOffice = document.getElementById('scriptOptPJeOffice').checked;
+            const incChains = document.getElementById('scriptOptChains').checked;
+            const incSCard = document.getElementById('scriptOptSCardService').checked;
+            const incSAC = document.getElementById('scriptOptSAC').checked;
+            const incJava = document.getElementById('scriptOptJava').checked;
+
+            let scriptContent = `@echo off
+:: ====================================================================
+:: CAIXA DE ASSISTÊNCIA DOS ADVOGADOS - SCRIPT AUTOMÁTICO DE TI
+:: INSTALAÇÃO SILENCIOSA DE CERTIFICAÇÃO DIGITAL & PJE
+:: ====================================================================
+
+title CAA TI - Instalador em Lote Certificado Digital
+color 0A
+
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERRO] Por favor, execute este script como Administrador!
+    pause
+    exit
+)
+
+echo ====================================================================
+echo   INICIANDO INSTALACAO AUTOMATIZADA - CAA TI
+echo ====================================================================
+echo.
+`;
+
+            if (incSafeSign) {
+                scriptContent += `echo [1] Instalando SafeSign IC 64-bit...
+msiexec /i "%~dp0SafeSign_64bit.msi" /qn /norestart
+\n`;
+            }
+
+            if (incSAC) {
+                scriptContent += `echo [*] Instalando SafeNet Authentication Client (SAC)...
+msiexec /i "%~dp0SAC_10_8.msi" /qn /norestart
+\n`;
+            }
+
+            if (incPJeOffice) {
+                scriptContent += `echo [2] Instalando PJe Office v2.6...
+"%~dp0pje-office_x64.exe" /VERYSILENT /NORESTART /SUPPRESSMESSAGEBOXES
+\n`;
+            }
+
+            if (incJava) {
+                scriptContent += `echo [*] Instalando Java Runtime Environment...
+"%~dp0jre-8u381-windows-x64.exe" /s
+\n`;
+            }
+
+            if (incChains) {
+                scriptContent += `echo [3] Importando Cadeias ICP-Brasil V2, V5 e V10...
+certutil -addstore -f "Root" "%~dp0v2.crt" >nul
+certutil -addstore -f "Root" "%~dp0v5.crt" >nul
+certutil -addstore -f "Root" "%~dp0v10.crt" >nul
+\n`;
+            }
+
+            if (incSCard) {
+                scriptContent += `echo [4] Verificando e Ativando Servico de SmartCard...
+sc config SCardSvr start= auto >nul
+net start SCardSvr >nul 2>&1
+\n`;
+            }
+
+            scriptContent += `echo ====================================================================
+echo   INSTALACAO CONCLUIDA COM SUCESSO!
+echo   Reinicie o navegador antes de acessar o PJe.
+echo ====================================================================
+pause`;
+
+            const blob = new Blob([scriptContent], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'AutoInstaller_Certificado_CAA.bat';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function resetChecklist() {
+            document.querySelectorAll('.chk-item').forEach(chk => chk.checked = false);
+        }
+
+        // Inicialização
+        window.onload = function() {
+            loadCatalog();
+            renderCategoryChips();
+            renderCards();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
